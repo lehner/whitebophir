@@ -84,7 +84,8 @@ html, body, svg {
 }
 
 #settings {
-	margin-bottom: 0;
+    margin-bottom: 0;
+    visibility: hidden;
 }
 
 #menu .tool {

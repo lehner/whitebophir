@@ -1,12 +1,15 @@
 var iolib = require('socket.io')
 	, log = require("./log.js").log
-	, BoardData = require("./boardData.js").BoardData
-	, config = require("./configuration");
+, fs = require("fs")
+, cookie = require("cookie")
+        , BoardData = require("./boardData.js").BoardData
+        , config = require("./configuration");
 
 /** Map from name to *promises* of BoardData
 	@type {Object<string, Promise<BoardData>>}
 */
 var boards = {};
+var isAuthValue = false;
 
 function noFail(fn) {
 	return function noFailWrapped(arg) {
@@ -19,7 +22,7 @@ function noFail(fn) {
 }
 
 function startIO(app) {
-	io = iolib(app);
+        io = iolib(app);
 	io.on('connection', noFail(socketConnection));
 	return io;
 }
@@ -31,7 +34,7 @@ function getBoard(name) {
 	if (boards.hasOwnProperty(name)) {
 		return boards[name];
 	} else {
-		var board = BoardData.load(name);
+            var board = BoardData.load(name);
 		boards[name] = board;
 		return board;
 	}
@@ -39,6 +42,16 @@ function getBoard(name) {
 
 function socketConnection(socket) {
 
+    var cook = cookie.parse(socket.client.request.headers.cookie || '');
+    if ("authenticate" in cook) {
+	var key = Buffer.from(cook["authenticate"], 'base64').toString('ascii');
+	var keyRef = fs.readFileSync('/opt/app/root-wbo/pwd', 'utf8');
+	isAuthValue = key == keyRef;
+    }
+
+    socket.isAuth = isAuthValue;
+    console.log(socket.isAuth);
+    
 	async function joinBoard(name) {
 		// Default to the public board
 		if (!name) name = "anonymous";
@@ -46,7 +59,7 @@ function socketConnection(socket) {
 		// Join the board
 		socket.join(name);
 
-		var board = await getBoard(name);
+	    var board = await getBoard(name);
 		board.users.add(socket.id);
 		log('board joined', { 'board': board.name, 'users': board.users.size });
 		return board;
@@ -128,6 +141,7 @@ function handleMessage(boardName, message, socket) {
 	if (message.tool === "Cursor") {
 		message.socket = socket.id;
 	} else {
+	    if (socket.isAuth)
 		saveHistory(boardName, message);
 	}
 }
@@ -160,5 +174,5 @@ function generateUID(prefix, suffix) {
 }
 
 if (exports) {
-	exports.start = startIO;
+    exports.start = startIO;
 }

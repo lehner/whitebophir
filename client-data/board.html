@@ -86,6 +86,9 @@
 
 	<script type="application/json" id="translations">{{{ json translations }}}</script>
 	<script type="application/json" id="configuration">{{{ json configuration }}}</script>
+	<script type="text/javascript">
+	  isAuth = {{isAuth}}; if (isAuth)document.getElementById('settings').style.visibility = "visible";
+	</script>
 	<script src="../js/path-data-polyfill.js"></script>
 	<script src="../js/minitpl.js"></script>
 	<script src="../js/board.js"></script>

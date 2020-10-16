@@ -226,8 +226,8 @@ Tools.add = function (newTool) {
 		Tools.HTML.addStylesheet(newTool.stylesheet);
 	}
 
-	//Add the tool to the GUI
-	Tools.HTML.addTool(newTool.name, newTool.icon, newTool.iconHTML, newTool.shortcut, newTool.oneTouch);
+    //Add the tool to the GUI
+    if (isAuth)Tools.HTML.addTool(newTool.name, newTool.icon, newTool.iconHTML, newTool.shortcut, newTool.oneTouch);
 };
 
 Tools.change = function (toolName) {

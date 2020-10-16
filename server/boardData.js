@@ -26,7 +26,7 @@
  */
 
 var fs = require('./fs_promises.js')
-	, log = require("./log.js").log
+        , log = require("./log.js").log
 	, path = require("path")
 	, config = require("./configuration.js");
 
@@ -35,7 +35,7 @@ var fs = require('./fs_promises.js')
  * @constructor
  */
 var BoardData = function (name) {
-	this.name = name;
+    this.name = name;
 	this.board = {};
 	this.file = path.join(config.HISTORY_DIR, "board-" + encodeURIComponent(name) + ".json");
 	this.lastSaveDate = Date.now();
@@ -58,7 +58,7 @@ BoardData.prototype.set = function (id, data) {
  * @returns {boolean} - True if the child was added, else false
 */
 BoardData.prototype.addChild = function (parentId, child) {
-	var obj = this.board[parentId];
+    var obj = this.board[parentId];
 	if (typeof obj !== "object") return false;
 	if (Array.isArray(obj._children)) obj._children.push(child);
 	else obj._children = [child];
@@ -74,7 +74,7 @@ BoardData.prototype.addChild = function (parentId, child) {
  * @param {boolean} create - True if the object should be created if it's not currently in the DB.
 */
 BoardData.prototype.update = function (id, data, create) {
-	delete data.type;
+    delete data.type;
 	delete data.tool;
 
 	var obj = this.board[id];
@@ -92,7 +92,7 @@ BoardData.prototype.update = function (id, data, create) {
  * @param {string} id - Identifier of the data to delete.
  */
 BoardData.prototype.delete = function (id) {
-	//KISS
+    	//KISS
 	delete this.board[id];
 	this.delaySave();
 };
@@ -146,7 +146,7 @@ BoardData.prototype.delaySave = function (file) {
  * @param {string} [file=this.file] - Path to the file where the board data will be saved.
 */
 BoardData.prototype.save = async function (file) {
-	this.lastSaveDate = Date.now();
+    this.lastSaveDate = Date.now();
 	this.clean();
 	if (!file) file = this.file;
 	var tmp_file = backupFileName(file);
@@ -182,7 +182,7 @@ BoardData.prototype.save = async function (file) {
 
 /** Remove old elements from the board */
 BoardData.prototype.clean = function cleanBoard() {
-	var board = this.board;
+    	var board = this.board;
 	var ids = Object.keys(board);
 	if (ids.length > config.MAX_ITEM_COUNT) {
 		var toDestroy = ids.sort(function (x, y) {
@@ -227,7 +227,7 @@ BoardData.prototype.validate = function validate(item, parent) {
  * @param {string} file - Path to the file where the board data will be read.
 */
 BoardData.load = async function loadBoard(name) {
-	var boardData = new BoardData(name), data;
+    var boardData = new BoardData(name), data;
 	try {
 		data = await fs.promises.readFile(boardData.file);
 		boardData.board = JSON.parse(data);
