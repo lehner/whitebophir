@@ -26,8 +26,9 @@
 
 (function grid() { //Code isolation
 
-    var index = 0; //grid off by default
-    var states = ["none", "url(#grid)", "url(#dots)"];
+    var index = 0;
+    //var states = ["none", "url(#grid)", "url(#dots)"];
+    var states = ["url(#grid)"];
 
     function toggleGrid(evt) {
         index = (index + 1) % states.length;
@@ -105,6 +106,7 @@
         return gridContainer;
     })();
 
+    /*
     Tools.add({ //The new tool
         "name": "Grid",
         "shortcut": "g",
@@ -114,5 +116,8 @@
         "onstart": toggleGrid,
         "mouseCursor": "crosshair",
     });
+    */
+    
+    toggleGrid(); // toggle on start
 
 })(); //End of code isolation

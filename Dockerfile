@@ -4,8 +4,8 @@ COPY . /opt/app
 WORKDIR /opt/app
 RUN npm install --production
 
-ENV PORT=80
-EXPOSE 80
+ENV PORT=100
+EXPOSE 100
 
 VOLUME /opt/app/server-data
 
