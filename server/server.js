@@ -23,7 +23,7 @@ if (parseFloat(process.versions.node) < MIN_NODE_VERSION) {
 
 var io = sockets.start(app);
 
-app.listen(config.PORT);
+app.listen(config.PORT, '0.0.0.0');
 log("server started", { port: config.PORT });
 
 

@@ -1,2 +1,2 @@
 #!/bin/bash
-docker build -t wbo .
+docker build -t wbo --network=host .
