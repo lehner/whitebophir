@@ -4,8 +4,8 @@ var app = require('http').createServer(handler)
 	, path = require('path')
 	, url = require('url')
 	, fs = require("fs")
-, cookie = require("cookie")
-, crypto = require("crypto")
+        , cookie = require("cookie")
+        , crypto = require("crypto")
 	, serveStatic = require("serve-static")
 	, createSVG = require("./createSVG.js")
 	, templating = require("./templating.js")
@@ -77,113 +77,135 @@ function validateBoardName(boardName) {
 }
 
 function handleRequest(request, response) {
-	var parsedUrl = url.parse(request.url, true);
-	var parts = parsedUrl.pathname.split('/');
+    var parsedUrl = url.parse(request.url, true);
+    var parts = parsedUrl.pathname.split('/');
     if (parts[0] === '') parts.shift();
-
-        var cook = cookie.parse(request.headers.cookie || '');
-	var key = Buffer.from(cook["authenticate"] || '', 'base64').toString('ascii');
-	var keyRef = fs.readFileSync('/opt/app/root-wbo/pwd', 'utf8');
-	isAuth = key == keyRef;
-
-        switch (parts[0]) {
-		case "boards":
-			// "boards" refers to the root directory
-			if (parts.length === 1 && parsedUrl.query.board) {
-				// '/boards?board=...' This allows html forms to point to boards
-				var headers = { Location: 'boards/' + encodeURIComponent(parsedUrl.query.board) };
-				response.writeHead(301, headers);
-				response.end();
-			} else if (parts.length === 2 && request.url.indexOf('.') === -1) {
-				validateBoardName(parts[1]);
-				// If there is no dot and no directory, parts[1] is the board name
-			    boardTemplate.serve(request, response, isAuth);
-			} else { // Else, it's a resource
-				request.url = "/" + parts.slice(1).join('/');
-				fileserver(request, response, serveError(request, response));
-			}
-			break;
-
-	case "authenticate":
-	    key = parsedUrl.query.authenticate;
-	    response.writeHead(307, { 'Location': '/index.html', 'Set-Cookie' : 'authenticate=' + Buffer.from(key).toString('base64') });
-	    response.end("");
-	    break;
-	    
-		case "download":
-			var boardName = validateBoardName(parts[1]),
-				history_file = path.join(config.HISTORY_DIR, "board-" + boardName + ".json");
-			if (parts.length > 2 && /^[0-9A-Za-z.\-]+$/.test(parts[2])) {
-				history_file += '.' + parts[2] + '.bak';
-			}
-			log("download", { "file": history_file });
-			fs.readFile(history_file, function (err, data) {
-				if (err) return serveError(request, response)(err);
-				response.writeHead(200, {
-					"Content-Type": "application/json",
-					"Content-Disposition": 'attachment; filename="' + boardName + '.wbo"',
-					"Content-Length": data.length,
-				});
-				response.end(data);
-			});
-			break;
-
-		case "export":
-		case "preview":
-			var boardName = validateBoardName(parts[1]),
-				history_file = path.join(config.HISTORY_DIR, "board-" + boardName + ".json");
-			response.writeHead(200, {
-				"Content-Type": "image/svg+xml",
-				"Content-Security-Policy": CSP,
-				"Cache-Control": "public, max-age=30",
-			});
-			var t = Date.now();
-			createSVG.renderBoard(history_file, response).then(function () {
-				log("preview", { "board": boardName, "time": Date.now() - t });
-				response.end();
-			}).catch(function (err) {
-				log("error", { "error": err.toString() });
-				response.end('<text>Sorry, an error occured</text>');
-			});
-			break;
-
-		case "random":
-			var name = crypto.randomBytes(32).toString('base64').replace(/[^\w]/g, '-');
-			response.writeHead(307, { 'Location': 'boards/' + name });
-			response.end(name);
-			break;
-
-		case "polyfill.js": // serve tailored polyfills
-		case "polyfill.min.js":
-			polyfillLibrary.getPolyfillString({
-				uaString: request.headers['user-agent'],
-				minify: request.url.endsWith(".min.js"),
-				features: {
-					'default': { flags: ['gated'] },
-					'es5': { flags: ['gated'] },
-					'es6': { flags: ['gated'] },
-					'es7': { flags: ['gated'] },
-					'es2017': { flags: ['gated'] },
-					'es2018': { flags: ['gated'] },
-					'es2019': { flags: ['gated'] },
-					'performance.now': { flags: ['gated'] },
-				}
-			}).then(function (bundleString) {
-				response.setHeader('Cache-Control', 'public, max-age=172800, stale-while-revalidate=1728000');
-				response.setHeader('Vary', 'User-Agent');
-				response.setHeader('Content-Type', 'application/javascript');
-				response.end(bundleString);
-			});
-			break;
-
-		case "": // Index page
-			logRequest(request);
-	    indexTemplate.serve(request, response, isAuth);
-			break;
-
-		default:
-			fileserver(request, response, serveError(request, response));
+    
+    var cook = cookie.parse(request.headers.cookie || '');
+    var key = Buffer.from(cook["authenticate"] || '', 'base64').toString('ascii');
+    var keyRef = fs.readFileSync('/opt/app/root-wbo/pwd', 'utf8');
+    isAuth = key == keyRef;
+    
+    switch (parts[0]) {
+    case "boards":
+	// "boards" refers to the root directory
+	if (parts.length === 1 && parsedUrl.query.board) {
+	    // '/boards?board=...' This allows html forms to point to boards
+	    var headers = { Location: 'boards/' + encodeURIComponent(parsedUrl.query.board) };
+	    response.writeHead(301, headers);
+	    response.end();
+	} else if (parts.length === 2 && request.url.indexOf('.') === -1) {
+	    validateBoardName(parts[1]);
+	    // If there is no dot and no directory, parts[1] is the board name
+	    boardTemplate.serve(request, response, isAuth);
+	} else { // Else, it's a resource
+	    request.url = "/" + parts.slice(1).join('/');
+	    fileserver(request, response, serveError(request, response));
 	}
+	break;
+	
+    case "authenticate":
+	key = parsedUrl.query.authenticate;
+	response.writeHead(307, { 'Location': '/index.html', 'Set-Cookie' : 'authenticate=' + Buffer.from(key).toString('base64') });
+	response.end("");
+	break;
+	
+    case "download":
+	var boardName = validateBoardName(parts[1]),
+	history_file = path.join(config.HISTORY_DIR, "board-" + boardName + ".json");
+	if (parts.length > 2 && /^[0-9A-Za-z.\-]+$/.test(parts[2])) {
+	    history_file += '.' + parts[2] + '.bak';
+	}
+	log("download", { "file": history_file });
+	fs.readFile(history_file, function (err, data) {
+	    if (err) return serveError(request, response)(err);
+	    response.writeHead(200, {
+		"Content-Type": "application/json",
+		"Content-Disposition": 'attachment; filename="' + boardName + '.wbo"',
+		"Content-Length": data.length,
+	    });
+	    response.end(data);
+	});
+	break;
+	
+    case "export":
+    case "preview":
+	var boardName = validateBoardName(parts[1]),
+	history_file = path.join(config.HISTORY_DIR, "board-" + boardName + ".json");
+	response.writeHead(200, {
+	    "Content-Type": "image/svg+xml",
+	    "Content-Security-Policy": CSP,
+	    "Cache-Control": "public, max-age=30",
+	});
+	var t = Date.now();
+	createSVG.renderBoard(history_file, response).then(function () {
+	    log("preview", { "board": boardName, "time": Date.now() - t });
+	    response.end();
+	}).catch(function (err) {
+	    log("error", { "error": err.toString() });
+	    response.end('<text>Sorry, an error occured</text>');
+	});
+	break;
+	
+    case "random":
+	var name = crypto.randomBytes(32).toString('base64').replace(/[^\w]/g, '-');
+	response.writeHead(307, { 'Location': 'boards/' + name });
+	response.end(name);
+	break;
+
+    case "statistics":
+	response.writeHead(200, {
+	    "Content-Type": "text/plain",
+	});
+
+	if (!isAuth) {
+	    response.end("Not authenticated\n");
+	} else {
+	        
+	    names = Object.keys(sockets.boards);
+	    Promise.all(Object.values(sockets.boards)).then((values) => {
+
+		response.write("Boards:\n");
+		for (i=0;i<values.length;i++) {
+		    response.write(names[i] + " (" + values[i].users.size + " users)\n");
+		}
+		response.end();
+	    });
+
+	}
+	break;
+	
+    case "polyfill.js": // serve tailored polyfills
+    case "polyfill.min.js":
+	polyfillLibrary.getPolyfillString({
+	    uaString: request.headers['user-agent'],
+	    minify: request.url.endsWith(".min.js"),
+	    features: {
+		'default': { flags: ['gated'] },
+		'es5': { flags: ['gated'] },
+		'es6': { flags: ['gated'] },
+		'es7': { flags: ['gated'] },
+		'es2017': { flags: ['gated'] },
+		'es2018': { flags: ['gated'] },
+		'es2019': { flags: ['gated'] },
+		'performance.now': { flags: ['gated'] },
+	    }
+	}).then(function (bundleString) {
+	    response.setHeader('Cache-Control', 'public, max-age=172800, stale-while-revalidate=1728000');
+	    response.setHeader('Vary', 'User-Agent');
+	    response.setHeader('Content-Type', 'application/javascript');
+	    response.end(bundleString);
+	});
+	break;
+	
+    case "": // Index page
+	logRequest(request);
+	indexTemplate.serve(request, response, isAuth);
+	break;
+	
+    default:
+	fileserver(request, response, serveError(request, response));
+    }
 }
 
 

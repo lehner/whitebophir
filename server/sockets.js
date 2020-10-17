@@ -1,9 +1,9 @@
 var iolib = require('socket.io')
-	, log = require("./log.js").log
+, log = require("./log.js").log
 , fs = require("fs")
 , cookie = require("cookie")
-        , BoardData = require("./boardData.js").BoardData
-        , config = require("./configuration");
+, BoardData = require("./boardData.js").BoardData
+, config = require("./configuration");
 
 /** Map from name to *promises* of BoardData
 	@type {Object<string, Promise<BoardData>>}
@@ -175,4 +175,5 @@ function generateUID(prefix, suffix) {
 
 if (exports) {
     exports.start = startIO;
+    exports.boards = boards;
 }
