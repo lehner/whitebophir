@@ -80,44 +80,45 @@ function socketConnection(socket) {
 	var lastEmitSecond = Date.now() / config.MAX_EMIT_COUNT_PERIOD | 0;
 	var emitCount = 0;
 	socket.on('broadcast', noFail(function onBroadcast(message) {
-		var currentSecond = Date.now() / config.MAX_EMIT_COUNT_PERIOD | 0;
-		if (currentSecond === lastEmitSecond) {
-			emitCount++;
-			if (emitCount > config.MAX_EMIT_COUNT) {
-				var request = socket.client.request;
-				if (emitCount % 100 === 0) {
-					log('BANNED', {
-						user_agent: request.headers['user-agent'],
-						original_ip: request.headers['x-forwarded-for'] || request.headers['forwarded'],
-						emit_count: emitCount
-					});
-				}
-				return;
-			}
-		} else {
-			emitCount = 0;
-			lastEmitSecond = currentSecond;
+	    var currentSecond = Date.now() / config.MAX_EMIT_COUNT_PERIOD | 0;
+	    if (currentSecond === lastEmitSecond) {
+		emitCount++;
+		if (emitCount > config.MAX_EMIT_COUNT) {
+		    var request = socket.client.request;
+		    if (emitCount % 100 === 0) {
+			log('BANNED', {
+			    user_agent: request.headers['user-agent'],
+			    original_ip: request.headers['x-forwarded-for'] || request.headers['forwarded'],
+			    emit_count: emitCount
+			});
+		    }
+		    return;
 		}
-
-		var boardName = message.board || "anonymous";
-		var data = message.data;
-
-		if (!socket.rooms.hasOwnProperty(boardName)) socket.join(boardName);
-
-		if (!data) {
-			console.warn("Received invalid message: %s.", JSON.stringify(message));
-			return;
-		}
-
-		if (!message.data.tool || config.BLOCKED_TOOLS.includes(message.data.tool)) {
-			log('BLOCKED MESSAGE', message.data);
-			return;
-		}
-
-		// Save the message in the board
-		handleMessage(boardName, data, socket);
-
-		//Send data to all other users connected on the same board
+	    } else {
+		emitCount = 0;
+		lastEmitSecond = currentSecond;
+	    }
+	    
+	    var boardName = message.board || "anonymous";
+	    var data = message.data;
+	    
+	    if (!socket.rooms.hasOwnProperty(boardName)) socket.join(boardName);
+	    
+	    if (!data) {
+		console.warn("Received invalid message: %s.", JSON.stringify(message));
+		return;
+	    }
+	    
+	    if (!message.data.tool || config.BLOCKED_TOOLS.includes(message.data.tool)) {
+		log('BLOCKED MESSAGE', message.data);
+		return;
+	    }
+	    
+	    // Save the message in the board
+	    handleMessage(boardName, data, socket);
+	    
+	    //Send data to all other users connected on the same board
+	    if (socket.isAuth)
 		socket.broadcast.to(boardName).emit('broadcast', data);
 	}));
 
@@ -138,12 +139,13 @@ function socketConnection(socket) {
 }
 
 function handleMessage(boardName, message, socket) {
+    if (socket.isAuth) {
 	if (message.tool === "Cursor") {
-		message.socket = socket.id;
+	    message.socket = socket.id;
 	} else {
-	    if (socket.isAuth)
-		saveHistory(boardName, message);
+	    saveHistory(boardName, message);
 	}
+    }
 }
 
 async function saveHistory(boardName, message) {
