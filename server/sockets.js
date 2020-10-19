@@ -1,7 +1,6 @@
 var iolib = require('socket.io')
 , log = require("./log.js").log
-, fs = require("fs")
-, cookie = require("cookie")
+, session = require("./session.js").session
 , BoardData = require("./boardData.js").BoardData
 , config = require("./configuration");
 
@@ -9,7 +8,6 @@ var iolib = require('socket.io')
 	@type {Object<string, Promise<BoardData>>}
 */
 var boards = {};
-var isAuthValue = false;
 
 function noFail(fn) {
 	return function noFailWrapped(arg) {
@@ -42,14 +40,7 @@ function getBoard(name) {
 
 function socketConnection(socket) {
 
-    var cook = cookie.parse(socket.client.request.headers.cookie || '');
-    if ("authenticate" in cook) {
-	var key = Buffer.from(cook["authenticate"], 'base64').toString('ascii');
-	var keyRef = fs.readFileSync('/opt/app/root-wbo/pwd', 'utf8');
-	isAuthValue = key == keyRef;
-    }
-
-    socket.isAuth = isAuthValue;
+    socket.isAuth = session.isAuthRequest(socket.client.request);
     console.log(socket.isAuth);
     
 	async function joinBoard(name) {

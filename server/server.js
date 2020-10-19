@@ -4,7 +4,7 @@ var app = require('http').createServer(handler)
 	, path = require('path')
 	, url = require('url')
 	, fs = require("fs")
-        , cookie = require("cookie")
+        , session = require("./session.js").session
         , crypto = require("crypto")
 	, serveStatic = require("serve-static")
 	, createSVG = require("./createSVG.js")
@@ -80,11 +80,8 @@ function handleRequest(request, response) {
     var parsedUrl = url.parse(request.url, true);
     var parts = parsedUrl.pathname.split('/');
     if (parts[0] === '') parts.shift();
-    
-    var cook = cookie.parse(request.headers.cookie || '');
-    var key = Buffer.from(cook["authenticate"] || '', 'base64').toString('ascii');
-    var keyRef = fs.readFileSync('/opt/app/root-wbo/pwd', 'utf8');
-    isAuth = key == keyRef;
+
+    isAuth = session.isAuthRequest(request);
     
     switch (parts[0]) {
     case "boards":
@@ -105,8 +102,8 @@ function handleRequest(request, response) {
 	break;
 	
     case "authenticate":
-	key = parsedUrl.query.authenticate;
-	response.writeHead(307, { 'Location': '/index.html', 'Set-Cookie' : 'authenticate=' + Buffer.from(key).toString('base64') });
+	sessionId = session.authenticate(parsedUrl.query.authenticate, request);
+ 	response.writeHead(307, { 'Location': '/index.html', 'Set-Cookie' : 'sessionId=' + sessionId + '; HttpOnly' });
 	response.end("");
 	break;
 	
@@ -169,7 +166,14 @@ function handleRequest(request, response) {
 		for (i=0;i<values.length;i++) {
 		    response.write(names[i] + " (" + values[i].users.size + " users)\n");
 		}
+
+		response.write("Sessions:\n");
+		for (s in session.sessions) {
+		    var se = session.sessions[s];
+		    response.write(s + ": " + se.IP + ", " + se.timestamp + "\n");
+		}
 		response.end();
+		
 	    });
 
 	}
